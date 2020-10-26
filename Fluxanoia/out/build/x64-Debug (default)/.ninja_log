@@ -1,0 +1,25 @@
+# ninja log v5
+6	897	625437951	CMakeFiles/main.dir/libs/sdw/CanvasPoint.cpp.obj	8f10c36aa332c07f
+13	900	625437951	CMakeFiles/main.dir/libs/sdw/Colour.cpp.obj	7ac33c92cc04880f
+17	935	625437951	CMakeFiles/main.dir/libs/sdw/DrawingWindow.cpp.obj	f0a61bdc54891b0e
+1	657	625456351	CMakeFiles/main.dir/src/main.cpp.obj	286959ace8aa737
+39	903	625437951	CMakeFiles/main.dir/src/maths.cpp.obj	dba051e6d6c2fb17
+28	933	625437951	CMakeFiles/main.dir/libs/sdw/RayTriangleIntersection.cpp.obj	b29b449a10cd0560
+32	932	625437951	CMakeFiles/main.dir/libs/sdw/Utils.cpp.obj	fe91ead66762b341
+1	376	625448154	CMakeFiles/main.dir/libs/sdw/CanvasTriangle.cpp.obj	24f8f62bf6fa2507
+9	938	625437951	CMakeFiles/main.dir/libs/sdw/ModelTriangle.cpp.obj	f60cc9296d6b20db
+21	939	625437951	CMakeFiles/main.dir/libs/sdw/TexturePoint.cpp.obj	364e81c38f8cb63
+1	760	625438028	CMakeFiles/main.dir/libs/sdw/TextureMap.cpp.obj	759db8fb138c0906
+1	693	625456410	CMakeFiles/main.dir/src/render.cpp.obj	887184ff666cdbe1
+743	1580	625456411	main.exe	d7aa351af4c54c21
+6	743	625456410	CMakeFiles/main.dir/src/object.cpp.obj	321eaa8e18e6ad7a
+1	712	625456471	CMakeFiles/main.dir/src/render.cpp.obj	887184ff666cdbe1
+713	1550	625456471	main.exe	d7aa351af4c54c21
+2	762	625456493	CMakeFiles/main.dir/src/object.cpp.obj	321eaa8e18e6ad7a
+762	1571	625456493	main.exe	d7aa351af4c54c21
+9	928	625457155	CMakeFiles/main.dir/src/main.cpp.obj	286959ace8aa737
+1	971	625457155	CMakeFiles/main.dir/src/render.cpp.obj	887184ff666cdbe1
+1	745	625457164	CMakeFiles/main.dir/src/object.cpp.obj	321eaa8e18e6ad7a
+745	1639	625457164	main.exe	d7aa351af4c54c21
+1	771	625457186	CMakeFiles/main.dir/src/object.cpp.obj	321eaa8e18e6ad7a
+771	1611	625457186	main.exe	d7aa351af4c54c21
