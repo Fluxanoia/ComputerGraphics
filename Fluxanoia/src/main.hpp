@@ -7,23 +7,26 @@
 #include <DrawingWindow.h>
 #include <CanvasTriangle.h>
 
-#include "object.hpp"
+#include "maths.hpp"
+#include "scene.hpp"
 
 class Main {
 private:
+
+	const float tra_fac{ 0.05 };
+	const float rot_fac{ PI / 100.0f };
 
 	const int width;
 	const int height;
 
 	bool running{ false };
 
+	Scene scene{ { 0, 0, 4 }, 2 };
 	DrawingWindow window;
 
 	void _update();
 	void _draw();
 	void _handleEvent(SDL_Event e);
-
-	Object cbox;
 
 public:
 

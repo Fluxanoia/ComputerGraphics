@@ -9,28 +9,29 @@
 #include <DrawingWindow.h>
 #include <CanvasTriangle.h>
 
+struct Face {
+	size_t a{ 0 }, b{ 0 }, c{ 0 };
+	size_t ta{ 0 }, tb{ 0 }, tc{ 0 };
+};
+struct Element {
+	std::string name{ };
+	std::string mtl{ };
+	std::vector<glm::vec3> points{ };
+	std::vector<glm::vec2> texture_points{ };
+	std::vector<Face> faces{ };
+};
+
 class Object {
 private:
 
-	std::vector<Colour> mtls{ };
-	void _loadMaterials(const std::string filename);
-
-	struct Tuple {
-		size_t a{ 0 }, b{ 0 }, c{ 0 };
-	};
-	struct Element {
-		std::string name{ };
-		std::string mtl{ };
-		std::vector<glm::vec3> points{ };
-		std::vector<Tuple> faces{ };
-	};
+	std::vector<std::string> mtllibs{ };
 	std::vector<Element> elements{ };
 
 public:
 
-	void load(const std::string filename, const float scale);
+	Object(const std::string filename, const float load_scale);
 
-	void draw(DrawingWindow& window, glm::vec3 view, 
-		float f, float scale = 1);
+	const std::vector<std::string>& getMaterialDependencies() const;
+	const std::vector<Element>& getElements() const;
 
 };

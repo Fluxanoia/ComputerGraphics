@@ -10,7 +10,19 @@ bool Render::in(DrawingWindow& window, glm::vec2 coord) {
 	return true;
 }
 bool Render::in(DrawingWindow& window, glm::vec3 coord) {
-	return Render::in(window, { coord[0], coord[1] });
+	return Render::in(window, glm::vec2{ coord[0], coord[1] });
+}
+bool Render::in(DrawingWindow& window, CanvasPoint point) {
+	return Render::in(window, glm::vec2{ point.x, point.y });
+}
+bool Render::in(DrawingWindow& window, CanvasPoint p1, CanvasPoint p2) {
+	return Render::in(window, p1)
+		|| Render::in(window, p2);
+}
+bool Render::in(DrawingWindow& window, CanvasTriangle tri) {
+	return Render::in(window, tri.v0())
+		|| Render::in(window, tri.v1())
+		|| Render::in(window, tri.v2());
 }
 
 uint32_t Render::_getTextureColour(TextureMap& map,
@@ -72,6 +84,8 @@ void Render::drawLine(DrawingWindow& window,
 	CanvasPoint p1, CanvasPoint p2, 
 	Colour c, float alpha,
 	std::vector<float>* depth) {
+	if (!Render::in(window, p1, p2)) return;
+
 	for (auto coord : _coordifyLine(p1, p2)) {
 		if (!Render::in(window, coord)) continue;
 		const size_t x{ static_cast<size_t>(coord[0]) };
@@ -87,7 +101,7 @@ void Render::drawLine(DrawingWindow& window,
 
 void Render::mapLine(DrawingWindow& window,
 	CanvasPoint p1, CanvasPoint p2,
-	TextureMap map) {
+	TextureMap map, std::vector<float>* depth) {
 	auto coords{ _coordifyLine(p1, p2) };
 	auto texture_coords{ _coordifyLine(coords.size(), 
 		p1.texturePoint, p2.texturePoint) };
@@ -97,9 +111,15 @@ void Render::mapLine(DrawingWindow& window,
 
 		if (!Render::in(window, coord)) continue;
 		
-		window.setPixelColour(
-			static_cast<size_t>(coord[0]), 
-			static_cast<size_t>(coord[1]),
+		const size_t x{ static_cast<size_t>(coord[0]) };
+		const size_t y{ static_cast<size_t>(coord[1]) };
+		const size_t depth_index{ x + window.width * y };
+		if (depth != nullptr) {
+			if (depth->at(depth_index) > coord[2]) continue;
+			depth->at(depth_index) = coord[2];
+		}
+
+		window.setPixelColour(x, y,
 			Render::_getTextureColour(map, 
 				texture_coord[0], texture_coord[1]));
 	}
@@ -107,6 +127,8 @@ void Render::mapLine(DrawingWindow& window,
 
 void Render::drawTriangle(DrawingWindow& window,
 	CanvasTriangle triangle, Colour c, float alpha) {
+	if (!Render::in(window, triangle)) return;
+
 	Render::drawLine(window,
 		triangle.v0(), triangle.v1(), c, alpha);
 	Render::drawLine(window,
@@ -146,6 +168,8 @@ void Render::fillTriangle(DrawingWindow& window,
 	CanvasTriangle t, Colour c, float alpha,
 	std::vector<float>* depth) {
 	
+	if (!Render::in(window, t)) return;
+
 	CanvasPoint top, middle_1, middle_2, bottom;
 	Render::_pointifyTriangle(t, top, middle_1, middle_2, bottom);
 
@@ -180,7 +204,10 @@ void Render::fillTriangle(DrawingWindow& window,
 }
 
 void Render::mapTriangle(DrawingWindow& window,
-	CanvasTriangle t, TextureMap map) {
+	CanvasTriangle t, TextureMap map,
+	std::vector<float>* depth) {
+
+	if (!Render::in(window, t)) return;
 
 	CanvasPoint top, middle_1, middle_2, bottom;
 	Render::_pointifyTriangle(t, top, middle_1, middle_2, bottom);
@@ -190,6 +217,9 @@ void Render::mapTriangle(DrawingWindow& window,
 	std::vector<glm::vec2> texture_coords{
 		Render::_coordifyTriangleTop(coords.size(), top.texturePoint, 
 			middle_1.texturePoint, middle_2.texturePoint) };
+	std::vector<glm::vec2> depth_coords{
+		Maths::interpolate2D({ top.depth, top.depth },
+		{ middle_1.depth, middle_2.depth }, coords.size()) };
 	float texture_step_1{ (middle_1.texturePoint.y - top.texturePoint.y)
 		/ coords.size() };
 	float texture_step_2{ (middle_2.texturePoint.y - top.texturePoint.y)
@@ -197,13 +227,15 @@ void Render::mapTriangle(DrawingWindow& window,
 	for (size_t index{ 0 }; index < coords.size(); index++) {
 		auto coord{ coords.at(index) };
 		auto texture_coord{ texture_coords.at(index) };
+		auto depth_coord{ depth_coords.at(index) };
 		float y{ top.y + index };
 		float texture_y_1{ top.texturePoint.y + index * texture_step_1 };
 		float texture_y_2{ top.texturePoint.y + index * texture_step_2 };
-		CanvasPoint p1{ coord[0], y }, p2{ coord[1], y };
+		CanvasPoint p1{ coord[0], y, depth_coord[0] },
+			p2{ coord[1], y, depth_coord[1] };
 		p1.texturePoint = { texture_coord[0], texture_y_1 };
 		p2.texturePoint = { texture_coord[1], texture_y_2 };
-		Render::mapLine(window, p1, p2, map);
+		Render::mapLine(window, p1, p2, map, depth);
 	}
 
 	coords = Render::_coordifyTriangleBottom(middle_1, middle_2, bottom);
@@ -213,19 +245,22 @@ void Render::mapTriangle(DrawingWindow& window,
 		/ coords.size();
 	texture_step_2 = (bottom.texturePoint.y - middle_2.texturePoint.y)
 		/ coords.size();
+	depth_coords = Maths::interpolate2D(
+		{ middle_1.depth, middle_2.depth },
+		{ bottom.depth, bottom.depth }, coords.size());
 	for (size_t index{ 0 }; index < coords.size(); index++) {
 		auto coord{ coords.at(index) };
 		auto texture_coord{ texture_coords.at(index) };
+		auto depth_coord{ depth_coords.at(index) };
 		float y{ middle_1.y + index };
 		float texture_y_1{ middle_1.texturePoint.y + index * texture_step_1 };
 		float texture_y_2{ middle_2.texturePoint.y + index * texture_step_2 };
-		CanvasPoint p1{ coord[0], y }, p2{ coord[1], y };
+		CanvasPoint p1{ coord[0], y, depth_coord[0] }, 
+			p2{ coord[1], y, depth_coord[1] };
 		p1.texturePoint = { texture_coord[0], texture_y_1 };
 		p2.texturePoint = { texture_coord[1], texture_y_2 };
-		Render::mapLine(window, p1, p2, map);
+		Render::mapLine(window, p1, p2, map, depth);
 	}
-
-	Render::drawTriangle(window, t, { 255, 255, 255 });
 }
 
 void Render::renderMap(DrawingWindow& window, 
@@ -233,7 +268,7 @@ void Render::renderMap(DrawingWindow& window,
 	for (size_t index{ 0 }; index < map.pixels.size(); index++) {
 		auto x{ index % map.width };
 		auto y{ (index - x) / map.width };
-		if (!Render::in(window, { x,  y })) continue;
+		if (!Render::in(window, glm::vec2{ x,  y })) continue;
 		window.setPixelColour(x, y, map.pixels.at(index));
 	}
 }

@@ -12,6 +12,9 @@ namespace Render {
 	
 	bool in(DrawingWindow& window, glm::vec2 coord);
 	bool in(DrawingWindow& window, glm::vec3 coord);
+	bool in(DrawingWindow& window, CanvasPoint point);
+	bool in(DrawingWindow& window, CanvasPoint p1, CanvasPoint p2);
+	bool in(DrawingWindow& window, CanvasTriangle tri);
 
 	uint32_t _getTextureColour(TextureMap& map,
 		float x, float y);
@@ -47,7 +50,8 @@ namespace Render {
 
 	void mapLine(DrawingWindow& window,
 		CanvasPoint p1, CanvasPoint p2,
-		TextureMap map);
+		TextureMap map,
+		std::vector<float>* depth = nullptr);
 
 	void drawTriangle(DrawingWindow& window,
 		CanvasTriangle triangle,
@@ -67,7 +71,8 @@ namespace Render {
 
 	void mapTriangle(DrawingWindow& window,
 		CanvasTriangle triangle,
-		TextureMap map);
+		TextureMap map, 
+		std::vector<float>* depth = nullptr);
 
 	void renderMap(DrawingWindow& window, 
 		TextureMap map);

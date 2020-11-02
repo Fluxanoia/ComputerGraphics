@@ -81,3 +81,54 @@ std::vector<glm::vec3> Maths::interpolate3D(glm::vec3 start, glm::vec3 end, size
 	interpolated.push_back(end);
 	return interpolated;
 }
+
+glm::mat4 Maths::translate(glm::vec3 v) {
+	return {
+		glm::vec4(1.0f, 0.0f, 0.0f, 0.0f),
+		glm::vec4(0.0f, 1.0f, 0.0f, 0.0f),
+		glm::vec4(0.0f, 0.0f, 1.0f, 0.0f),
+		glm::vec4(v, 1.0f)
+	};
+}
+glm::mat4 Maths::scale(float scale) {
+	return {
+		glm::vec4(scale, 0.0f, 0.0f, 0.0f),
+		glm::vec4(0.0f, scale, 0.0f, 0.0f),
+		glm::vec4(0.0f, 0.0f, scale, 0.0f),
+		glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)
+	};
+}
+glm::mat4 Maths::scale(glm::vec3 scale) {
+	return {
+		glm::vec4(scale[0], 0.0f, 0.0f, 0.0f),
+		glm::vec4(0.0f, scale[1], 0.0f, 0.0f),
+		glm::vec4(0.0f, 0.0f, scale[2], 0.0f),
+		glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)
+	};
+}
+glm::mat4 Maths::rotateX(float angle) {
+	return { 
+		glm::vec4(1.0f, 0.0f, 0.0f, 0.0f),
+		glm::vec4(0.0f, cos(angle), sin(angle), 0.0f),
+		glm::vec4(0.0f, -sin(angle), cos(angle), 0.0f),
+		glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)
+	};
+}
+
+glm::mat4 Maths::rotateY(float angle) {
+	return { 
+		glm::vec4(cos(angle), 0.0f, -sin(angle), 0.0f),
+		glm::vec4(0.0f, 1.0f, 0.0f, 0.0f),
+		glm::vec4(sin(angle), 0.0f, cos(angle), 0.0f),
+		glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)
+	};
+}
+
+glm::mat4 Maths::rotateZ(float angle) {
+	return { 
+		glm::vec4(cos(angle), sin(angle), 0.0f, 0.0f),
+		glm::vec4(-sin(angle), cos(angle), 0.0f, 0.0f),
+		glm::vec4(0.0f, 0.0f, 1.0f, 0.0f),
+		glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)
+	};
+}

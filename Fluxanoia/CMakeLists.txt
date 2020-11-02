@@ -36,7 +36,7 @@ add_executable(main
         libs/sdw/TextureMap.cpp
         libs/sdw/TexturePoint.cpp
         libs/sdw/Utils.cpp
-        "src/main.cpp" "src/maths.hpp" "src/maths.cpp" "src/render.cpp" "src/render.hpp" "src/main.hpp" "src/object.hpp" "src/object.cpp")
+        "src/main.cpp" "src/maths.hpp" "src/maths.cpp" "src/render.cpp" "src/render.hpp" "src/main.hpp" "src/object.hpp" "src/object.cpp" "src/scene.cpp")
 
 if (MSVC)
     target_compile_options(main
