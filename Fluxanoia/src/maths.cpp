@@ -90,22 +90,6 @@ glm::mat4 Maths::translate(glm::vec3 v) {
 		glm::vec4(v, 1.0f)
 	};
 }
-glm::mat4 Maths::scale(float scale) {
-	return {
-		glm::vec4(scale, 0.0f, 0.0f, 0.0f),
-		glm::vec4(0.0f, scale, 0.0f, 0.0f),
-		glm::vec4(0.0f, 0.0f, scale, 0.0f),
-		glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)
-	};
-}
-glm::mat4 Maths::scale(glm::vec3 scale) {
-	return {
-		glm::vec4(scale[0], 0.0f, 0.0f, 0.0f),
-		glm::vec4(0.0f, scale[1], 0.0f, 0.0f),
-		glm::vec4(0.0f, 0.0f, scale[2], 0.0f),
-		glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)
-	};
-}
 glm::mat4 Maths::rotateX(float angle) {
 	return { 
 		glm::vec4(1.0f, 0.0f, 0.0f, 0.0f),

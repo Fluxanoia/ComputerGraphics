@@ -2,31 +2,22 @@
 
 Scene::Scene() { }
 Scene::Scene(glm::vec3 camera_pos, float focal_length) {
-	this->camera_pos = glm::vec4{ camera_pos, 1.0f };
+	this->camera_view = Maths::translate(camera_pos) * camera_view;
 	this->focal_length = focal_length;
 }
 
 void Scene::draw(DrawingWindow& window) {
 	depth.assign(window.width * window.height, 0);
 
-	glm::vec3 camera_pos{
-		this->camera_pos[0] / this->camera_pos[3],
-		this->camera_pos[1] / this->camera_pos[3],
-		this->camera_pos[2] / this->camera_pos[3],
-	};
+	auto camera_pos{ this->_getCameraPos() };
 
 	for (auto pair : objects) {
 		for (const Element& elem : pair.first.getElements()) {
 			std::vector<glm::vec3> points{ };
 			for (glm::vec3 point : elem.points) {
+				auto view{ camera_view * glm::vec4{ point, 1.0f } };
+				point = glm::vec3{ view } / view[3];
 
-				point = glm::vec3{
-					camera_orientation * glm::vec4{
-						point[0] - camera_pos[0],
-						camera_pos[1] - point[1],
-						camera_pos[2] - point[2], 1.0f
-					}
-				};
 				points.push_back({
 					pair.second * (focal_length * point[0] / point[2])
 						+ (window.width / 2),
@@ -80,46 +71,55 @@ void Scene::draw(DrawingWindow& window) {
 }
 
 void Scene::translate(glm::vec3 v) {
-	camera_pos = Maths::translate(v) * camera_pos;
+	camera_view = Maths::translate(v) 
+		* camera_view;
+	print("translating");
 }
-void Scene::rotate(glm::vec3 r) {
-	camera_pos = Maths::rotateX(r[0]) * camera_pos;
-	camera_pos = Maths::rotateY(r[1]) * camera_pos;
-	camera_pos = Maths::rotateZ(r[2]) * camera_pos;
+void Scene::rotateCamera(glm::vec3 r) {
+	camera_view = Maths::rotateZ(r[2]) 
+		* Maths::rotateY(r[1]) 
+		* Maths::rotateX(r[0]) 
+		* camera_view;
+	print("rotating camera");
 }
-void Scene::orient(glm::vec3 o) {
-	camera_orientation *= Maths::rotateX(o[0]);
-	camera_orientation *= Maths::rotateY(o[1]);
-	camera_orientation *= Maths::rotateZ(o[2]);
+void Scene::rotateWorld(glm::vec3 r) {
+	auto c{ this->_getCameraPos() };
+	camera_view = Maths::translate(c)
+		* Maths::rotateZ(r[2])
+		* Maths::rotateY(r[1])
+		* Maths::rotateX(r[0])
+		* Maths::translate(-1.0f * c)
+		* camera_view;
+	print("rotating world");
 }
 
-void Scene::lookAt(glm::vec3 o) {
-	glm::vec3 z{ glm::normalize(glm::vec3{
-		camera_pos[0] - o[0],
-		camera_pos[1] - o[1],
-		camera_pos[2] - o[2]
-	}) };
-	glm::vec3 x{ glm::normalize(glm::cross({ 0.0f, 1.0f, 0.0f }, z)) };
-	glm::vec3 y{ glm::normalize(glm::cross(x, z)) };
-
-	camera_orientation = glm::mat4{
-		glm::vec4{ x, 0.0f },
-		glm::vec4{ y, 0.0f },
-		glm::vec4{ z, 0.0f },
-		glm::vec4{ 0.0f, 0.0f, 0.0f, 1.0f }
-	};
-
-	for (int j = 0; j < 4; j++) {
-		std::cout << camera_pos[j] << " ";
-	}
-	std::cout << std::endl << "--------------------" << std::endl;
+void Scene::print(std::string message) {
+#ifdef CG_DEBUG
+	std::cout << "---" << message << "---" << std::endl;
+	std::cout << "Camera: " << std::endl;
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 4; j++) {
-			std::cout << camera_orientation[j][i] << " ";
+			std::cout << camera_view[j][i] << " ";
 		}
 		std::cout << std::endl;
 	}
-	std::cout << std::endl;
+	std::cout << "---" << "             " << "---" << std::endl << std::endl;
+#endif
+}
+
+void Scene::lookAt(glm::vec3 o) {
+	auto c{ _getCameraPos() };
+	glm::vec3 z{ glm::normalize(c - o) };
+	glm::vec3 x{ glm::cross({ 0.0f, 1.0f, 0.0f }, z) };
+	glm::vec3 y{ glm::cross(z, x) };
+
+	camera_view = glm::mat4{
+		glm::vec4{ x, 0.0f },
+		glm::vec4{ y, 0.0f },
+		glm::vec4{ z, 0.0f },
+		glm::vec4{ c, 1.0f }
+	};
+	print("looking");
 }
 
 void Scene::loadObject(std::string name,
@@ -130,6 +130,10 @@ void Scene::loadObject(std::string name,
 		: objects.back().first.getMaterialDependencies()) {
 		this->_loadMaterials(mtl_name);
 	}
+}
+
+glm::vec3 Scene::_getCameraPos() {
+	return glm::vec3{ camera_view[3] } / camera_view[3][3];
 }
 
 void Scene::_loadMaterials(const std::string filename) {

@@ -24,6 +24,10 @@ private:
 	Scene scene{ { 0, 0, 4 }, 2 };
 	DrawingWindow window;
 
+	int last_x_rot{ 0 };
+	int last_y_rot{ 0 };
+	int last_z_rot{ 0 };
+
 	void _update();
 	void _draw();
 	void _handleEvent(SDL_Event e);

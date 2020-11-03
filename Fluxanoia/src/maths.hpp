@@ -23,8 +23,6 @@ namespace Maths {
 	std::vector<glm::vec3> interpolate3D(glm::vec3 start, glm::vec3 end, size_t numValues);
 
 	glm::mat4 translate(glm::vec3 v);
-	glm::mat4 scale(float scale);
-	glm::mat4 scale(glm::vec3 scale);
 	glm::mat4 rotateX(float angle);
 	glm::mat4 rotateY(float angle);
 	glm::mat4 rotateZ(float angle);

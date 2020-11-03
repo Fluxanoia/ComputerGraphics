@@ -22,13 +22,13 @@ private:
 		std::string texture{ };
 	};
 
-	glm::vec4 camera_pos{ 0, 0, 0, 0 };
-	glm::mat4 camera_orientation{ 
+	glm::mat4 camera_view{ 
 		glm::vec4{ 1.0f, 0.0f, 0.0f, 0.0f },
-		glm::vec4{ 0.0f, 1.0f, 0.0f, 0.0f },
-		glm::vec4{ 0.0f, 0.0f, 1.0f, 0.0f },
+		glm::vec4{ 0.0f, -1.0f, 0.0f, 0.0f },
+		glm::vec4{ 0.0f, 0.0f, -1.0f, 0.0f },
 		glm::vec4{ 0.0f, 0.0f, 0.0f, 1.0f },
 	};
+	glm::vec3 _getCameraPos();
 	float focal_length{ 1 };
 	std::vector<float> depth{ };
 
@@ -38,6 +38,8 @@ private:
 	std::vector<Material> materials{ };
 	void _loadMaterials(const std::string filename);
 
+	void print(std::string message);
+
 public:
 
 	Scene();
@@ -46,8 +48,8 @@ public:
 	void draw(DrawingWindow& window);
 
 	void translate(glm::vec3 v);
-	void rotate(glm::vec3 r);
-	void orient(glm::vec3 o);
+	void rotateCamera(glm::vec3 r);
+	void rotateWorld(glm::vec3 r);
 
 	void lookAt(glm::vec3 o);
 
