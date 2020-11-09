@@ -8,6 +8,8 @@
 
 #include "maths.hpp"
 
+enum class RenderMode { WIRE, RASTER, RAYTRACED };
+
 namespace Render {
 	
 	bool in(DrawingWindow& window, glm::vec2 coord);

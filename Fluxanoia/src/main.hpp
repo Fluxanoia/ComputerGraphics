@@ -14,8 +14,7 @@ class Main {
 private:
 
 	const float tra_fac{ 0.05f };
-	const float rot_fac{ 
-		static_cast<float>(PI) / 100.0f };
+	const float rot_fac{ static_cast<float>(PI) / 100.0f };
 
 	const int width;
 	const int height;
@@ -24,10 +23,6 @@ private:
 
 	Scene scene{ { 0, 0, 4 }, 2 };
 	DrawingWindow window;
-
-	int last_x_rot{ 0 };
-	int last_y_rot{ 0 };
-	int last_z_rot{ 0 };
 
 	void _update();
 	void _draw();

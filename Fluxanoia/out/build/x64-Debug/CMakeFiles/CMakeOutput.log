@@ -50,32 +50,32 @@ The CXX compiler identification is MSVC, found in "D:/C++/CG2020/ComputerGraphic
 Determining if the C compiler works passed with the following output:
 Change Dir: D:/C++/CG2020/ComputerGraphics/Fluxanoia/out/build/x64-Debug/CMakeFiles/CMakeTmp
 
-Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_d5ac3 && [1/2] Building C object CMakeFiles\cmTC_d5ac3.dir\testCCompiler.c.obj
-[2/2] Linking C executable cmTC_d5ac3.exe
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_039be && [1/2] Building C object CMakeFiles\cmTC_039be.dir\testCCompiler.c.obj
+[2/2] Linking C executable cmTC_039be.exe
 
 
 
 Detecting C compiler ABI info compiled with the following output:
 Change Dir: D:/C++/CG2020/ComputerGraphics/Fluxanoia/out/build/x64-Debug/CMakeFiles/CMakeTmp
 
-Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_31ee1 && [1/2] Building C object CMakeFiles\cmTC_31ee1.dir\CMakeCCompilerABI.c.obj
-[2/2] Linking C executable cmTC_31ee1.exe
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_ea68c && [1/2] Building C object CMakeFiles\cmTC_ea68c.dir\CMakeCCompilerABI.c.obj
+[2/2] Linking C executable cmTC_ea68c.exe
 
 
 
 Determining if the CXX compiler works passed with the following output:
 Change Dir: D:/C++/CG2020/ComputerGraphics/Fluxanoia/out/build/x64-Debug/CMakeFiles/CMakeTmp
 
-Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_6ad0d && [1/2] Building CXX object CMakeFiles\cmTC_6ad0d.dir\testCXXCompiler.cxx.obj
-[2/2] Linking CXX executable cmTC_6ad0d.exe
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_9007e && [1/2] Building CXX object CMakeFiles\cmTC_9007e.dir\testCXXCompiler.cxx.obj
+[2/2] Linking CXX executable cmTC_9007e.exe
 
 
 
 Detecting CXX compiler ABI info compiled with the following output:
 Change Dir: D:/C++/CG2020/ComputerGraphics/Fluxanoia/out/build/x64-Debug/CMakeFiles/CMakeTmp
 
-Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_8dc3f && [1/2] Building CXX object CMakeFiles\cmTC_8dc3f.dir\CMakeCXXCompilerABI.cpp.obj
-[2/2] Linking CXX executable cmTC_8dc3f.exe
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_21114 && [1/2] Building CXX object CMakeFiles\cmTC_21114.dir\CMakeCXXCompilerABI.cpp.obj
+[2/2] Linking CXX executable cmTC_21114.exe
 
 
 

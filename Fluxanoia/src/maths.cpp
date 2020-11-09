@@ -23,7 +23,9 @@ uint32_t Maths::pack(glm::vec3 colour, float alpha) {
 	return pack(colour[0], colour[1], colour[2], alpha);
 }
 uint32_t Maths::pack(Colour colour, float alpha) {
-	return pack(colour.red, colour.green, colour.blue, alpha);
+	return pack(static_cast<float>(colour.red), 
+		static_cast<float>(colour.green), 
+		static_cast<float>(colour.blue), alpha);
 }
 
 bool Maths::in(float value, float min, float max) {
