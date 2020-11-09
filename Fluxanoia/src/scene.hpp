@@ -34,6 +34,10 @@ private:
 
 	std::vector<std::pair<std::string, TextureMap>> textures{ };
 	std::vector<std::pair<Object, float>> objects{ };
+	void _transformPoints(DrawingWindow& w,
+		float scale,
+		std::vector<glm::vec3> p,
+		std::vector<glm::vec3>& out);
 
 	std::vector<Material> materials{ };
 	void _loadMaterials(const std::string filename);
@@ -50,8 +54,6 @@ public:
 	void translate(glm::vec3 v);
 	void rotateCamera(glm::vec3 r);
 	void rotateWorld(glm::vec3 r);
-
-	void lookAt(glm::vec3 o);
 
 	void loadObject(std::string name, 
 		float load_scale, float draw_scale);

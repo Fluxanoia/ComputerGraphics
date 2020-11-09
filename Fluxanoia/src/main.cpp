@@ -5,7 +5,7 @@
 
 Main::Main(int width, int height) : width{ width }, height{ height } {
 	window = DrawingWindow{ width, height, false };
-	scene.loadObject("textured-cornell-box.obj", 0.17f, 250);
+	scene.loadObject("textured-cornell-box.obj", 0.4f, 100);
 }
 
 void Main::run() {
@@ -25,18 +25,17 @@ void Main::run() {
 void Main::_draw() {
 	scene.draw(window);
 }
-void Main::_update() { 
+void Main::_update() {
 	last_x_rot += (-1 + rand() % 3);
 	last_y_rot += (-1 + rand() % 3);
 	last_z_rot += (-1 + rand() % 3);
 	if (abs(last_x_rot) > 5) last_x_rot *= 5 / 6.0f;
 	if (abs(last_y_rot) > 5) last_y_rot *= 5 / 6.0f;
 	if (abs(last_z_rot) > 5) last_z_rot *= 5 / 6.0f;
-	//scene.rotateWorld({ 
-		//last_x_rot * rot_fac,
-		//last_y_rot * rot_fac,
-		//last_z_rot * rot_fac });
-	//scene.lookAt({ 0, 0, 0 });
+	scene.rotateWorld({ 
+		last_x_rot * rot_fac,
+		last_y_rot * rot_fac,
+		last_z_rot * rot_fac });
 }
 void Main::_handleEvent(SDL_Event e) { 
 	switch (e.type) {
@@ -65,12 +64,13 @@ void Main::_handleEvent(SDL_Event e) {
 		case SDLK_o: o[1] += rot_fac; break;
 		case SDLK_i: o[2] -= rot_fac; break;
 		case SDLK_k: o[2] += rot_fac; break;
-
-		case SDLK_r: scene.lookAt({ 0, 0, 0 }); break;
 		}
 		if (glm::length(v) != 0) scene.translate(v);
 		if (glm::length(o) != 0) scene.rotateCamera(o);
-		if (glm::length(r) != 0) scene.rotateWorld(r);
+		if (glm::length(r) != 0) {
+			scene.rotateWorld(r);
+			scene.rotateCamera(-1.0f * r);
+		}
 		break;
 	}
 }

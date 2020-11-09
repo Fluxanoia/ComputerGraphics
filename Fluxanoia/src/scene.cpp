@@ -6,26 +6,33 @@ Scene::Scene(glm::vec3 camera_pos, float focal_length) {
 	this->focal_length = focal_length;
 }
 
+void Scene::_transformPoints(DrawingWindow& w,
+	float scale,
+	std::vector<glm::vec3> p,
+	std::vector<glm::vec3>& out) {
+	out.clear();
+	for (glm::vec3 point : p) {
+		auto view{ camera_view * glm::vec4{ point, 1.0f } };
+		point = glm::vec3{ view } / view[3];
+
+		out.push_back({
+			scale * (focal_length * point[0] / point[2])
+				+ (w.width / 2),
+			scale * (focal_length * point[1] / point[2])
+				+ (w.height / 2),
+			1 / point[2]
+		});
+	}
+}
 void Scene::draw(DrawingWindow& window) {
 	depth.assign(window.width * window.height, 0);
 
+	std::vector<glm::vec3> points{ };
 	auto camera_pos{ this->_getCameraPos() };
-
 	for (auto pair : objects) {
 		for (const Element& elem : pair.first.getElements()) {
-			std::vector<glm::vec3> points{ };
-			for (glm::vec3 point : elem.points) {
-				auto view{ camera_view * glm::vec4{ point, 1.0f } };
-				point = glm::vec3{ view } / view[3];
-
-				points.push_back({
-					pair.second * (focal_length * point[0] / point[2])
-						+ (window.width / 2),
-					pair.second * (focal_length * point[1] / point[2])
-						+ (window.height / 2),
-					1 / point[2]
-					});
-			}
+			this->_transformPoints(window, pair.second, 
+				elem.points, points);
 
 			Material material{ "" };
 			for (auto mtl : materials) {
@@ -105,21 +112,6 @@ void Scene::print(std::string message) {
 	}
 	std::cout << "---" << "             " << "---" << std::endl << std::endl;
 #endif
-}
-
-void Scene::lookAt(glm::vec3 o) {
-	auto c{ _getCameraPos() };
-	glm::vec3 z{ glm::normalize(c - o) };
-	glm::vec3 x{ glm::cross({ 0.0f, 1.0f, 0.0f }, z) };
-	glm::vec3 y{ glm::cross(z, x) };
-
-	camera_view = glm::mat4{
-		glm::vec4{ x, 0.0f },
-		glm::vec4{ y, 0.0f },
-		glm::vec4{ z, 0.0f },
-		glm::vec4{ c, 1.0f }
-	};
-	print("looking");
 }
 
 void Scene::loadObject(std::string name,
