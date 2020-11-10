@@ -2,8 +2,12 @@
 
 Scene::Scene() { }
 Scene::Scene(glm::vec3 camera_pos, float focal_length) {
-	this->camera_view = Maths::translate(camera_pos) * camera_view;
-	this->focal_length = focal_length;
+	this->camera_pos = camera_pos;
+	this->calibration = {
+		glm::vec3{ focal_length, 0.0f, 0.0f },
+		glm::vec3{ 0.0f, focal_length, 0.0f },
+		glm::vec3{ 0.0f, 0.0f, 1.0f }
+	};
 }
 
 void Scene::draw(DrawingWindow& window) {
@@ -44,21 +48,21 @@ void Scene::draw(DrawingWindow& window) {
 	}
 }
 
-glm::vec3 Scene::_relativePoint(glm::vec3 p) {
-	return glm::normalize(glm::vec3(camera_view[0])) * p[0]
-		+ glm::normalize(glm::vec3(camera_view[1])) * p[1]
-		+ glm::normalize(glm::vec3(camera_view[2])) * p[2];
+glm::mat4 Scene::_getExtrinsicMatrix() const {
+	return {
+		glm::vec4{ extrinsic[0], 0.0f },
+		glm::vec4{ extrinsic[1], 0.0f },
+		glm::vec4{ extrinsic[2], 0.0f },
+		glm::vec4{ -1.0f * extrinsic * camera_pos, 1.0f },
+	};
 }
 glm::vec3 Scene::_transformPoint(DrawingWindow& w, 
 	glm::vec3 p, float scale) {
-	auto view{ camera_view * glm::vec4{ p, 1.0f } };
-	p = glm::vec3{ view } / view[3];;
-	return {
-		scale * (focal_length * p[0] / p[2])
-			+ (w.width / 2),
-		scale * (focal_length * p[1] / p[2])
-			+ (w.height / 2),
-		1 / p[2]
+	p = calibration * glm::vec3{ this->_getExtrinsicMatrix() * glm::vec4{ p, 1.0f } };
+	return glm::vec3{
+		-scale * (p[0] / p[2]) + (w.width / 2),
+		-scale * (p[1] / p[2]) + (w.height / 2),
+		-1 / p[2]
 	};
 }
 void Scene::_transformPoints(DrawingWindow& w,
@@ -100,46 +104,33 @@ void Scene::_faceTexturePoints(const Face& face,
 		map.height * point_tc[1] };
 }
 
-bool Scene::_verifyRaytrace(const glm::vec3& v) const {
-	if (isinf(v[0]) || isnan(v[0])) return false;
-	if (isinf(v[1]) || isnan(v[1])) return false;
-	if (isinf(v[2]) || isnan(v[2])) return false;
-	if (v[0] <= this->focal_length) return false;
-	if (v[1] < 0 || v[1] > 1) return false;
-	if (v[2] < 0 || v[2] > 1) return false;
-	if (v[1] + v[2] >= 1) return false;
+bool Scene::_raytrace(const glm::vec3& from,
+	const glm::vec3& ray,
+	const glm::vec3& a,
+	const glm::vec3& b,
+	const glm::vec3& c,
+	glm::vec3* sr,
+	glm::vec3* ur,
+	glm::vec3* vr) const {
+	glm::vec3 u{ b - a };
+	glm::vec3 v{ c - a };
+	auto mat{ glm::inverse(glm::mat3{ -ray, u, v }) };
+	auto vec{ glm::vec3{ from - a } };
+	glm::vec3 s{ mat * vec };
+	if (ur != nullptr) (*ur) = u;
+	if (vr != nullptr) (*vr) = v;
+	if (sr != nullptr) (*sr) = s;
+
+	if (isinf(s[0]) || isnan(s[0])) return false;
+	if (isinf(s[1]) || isnan(s[1])) return false;
+	if (isinf(s[2]) || isnan(s[2])) return false;
+	if (s[0] < 0) return false;
+	if (s[1] < 0 || s[1] > 1) return false;
+	if (s[2] < 0 || s[2] > 1) return false;
+	if (s[1] + s[2] >= 1) return false;
 	return true;
 }
-/*bool Scene::_raytrace(const glm::vec3 ray,
-	glm::vec3& output, std::string& output_mtl) const {
-	glm::vec3 global_solution{ };
-	bool has_intersected{ false };
-	auto c{ this->_getCameraPos() };
-	for (auto pair : objects) {
-		for (const Element& elem : pair.first.getElements()) {
-			const std::vector<glm::vec3>& points{ elem.points };
-			for (const Face& face : elem.faces) {
-				glm::vec3 u{ points.at(face.b) - points.at(face.a) };
-				glm::vec3 v{ points.at(face.c) - points.at(face.a) };
-				glm::vec3 local_solution{ glm::inverse(
-					glm::mat3{ -ray, u, v }) * glm::vec3{ c - points.at(face.a) } };
-				if (this->_verifyRaytrace(local_solution)
-					&& (!has_intersected
-						|| (has_intersected
-							&& local_solution[0] < global_solution[0]))) {
-					has_intersected = true;
-					global_solution = local_solution;
-					output = points.at(face.a)
-						+ global_solution[1] * u
-						+ global_solution[2] * v;
-					output_mtl = elem.mtl;
-				}
-			}
-		}
-	}
-	return has_intersected;
-}
-*/
+
 void Scene::_drawWire(DrawingWindow& window,
 	const Element& elem,
 	const std::vector<glm::vec3>& points) {
@@ -176,42 +167,38 @@ void Scene::_drawRaster(DrawingWindow& window,
 	}
 }
 void Scene::_drawRaytraced(DrawingWindow& window) {
-	const float field_of_view{ PI / 2 };
+	const float field_of_view{ static_cast<float>(PI / 2) };
 	const float aspect_ratio{ static_cast<float>(window.height) 
 		/ static_cast<float>(window.width) };
 	const float half_view_width{ glm::tan(field_of_view / 2) };
 	const float half_view_height{ half_view_width * aspect_ratio };
+	const float half_screen_width{ static_cast<float>(window.width / 2) };
+	const float half_screen_height{ static_cast<float>(window.height / 2) };
+	const float delta_x{ half_view_width / half_screen_width };
+	const float delta_y{ half_view_height / half_screen_height };
 
-	auto c{ this->_getCameraPos() };
-	const glm::vec3 delta_x{ this->_relativePoint({ (half_view_width * 2) / window.width, 0, 0 }) };
-	const glm::vec3 delta_y{ this->_relativePoint({ 0, (half_view_height * 2) / window.height, 0 }) };
-	const glm::vec3 plane_nw{ -1.0f * this->_relativePoint({ half_view_width,
-		half_view_height, -focal_length }) };
-	for (float x = 0; x < window.width; x++) {
-		for (float y = 0; y < window.height; y++) {
+	for (float x = -half_screen_width; x < half_screen_width; x++) {
+		for (float y = -half_screen_height; y < half_screen_height; y++) {
 			bool collided{ false };
 			Face collided_face;
 			Element collided_elem;
 			float collided_scale{ 0 };
 			glm::vec3 global_solution{ }, output{ };
-			const glm::vec3 ray{ plane_nw 
-				+ delta_x * x
-				+ delta_y * y};
+			glm::vec3 ray{ extrinsic * glm::vec3{ delta_x * x, delta_y * y, -1 } };
+			ray[0] *= -1;
 			for (const std::pair<Object, float>& pair : objects) {
 				for (const Element& elem : pair.first.getElements()) {
 					const std::vector<glm::vec3>& points{ elem.points };
 					for (const Face& face : elem.faces) {
-						glm::vec3 u{ points.at(face.b) - points.at(face.a) };
-						glm::vec3 v{ points.at(face.c) - points.at(face.a) };
-						auto mat{ glm::inverse(glm::mat3{ -ray, u, v }) };
-						auto vec{ glm::vec3{ c - points.at(face.a) } };
-						glm::vec3 local_solution{ mat * vec };
-						if (this->_verifyRaytrace(local_solution)
+						glm::vec3 s, u, v;
+						if (this->_raytrace(camera_pos, ray, 
+								points.at(face.a), points.at(face.b),
+								points.at(face.c), &s, &u, &v)
 							&& (!collided
 								|| (collided
-									&& local_solution[0] < global_solution[0]))) {
+									&& s[0] < global_solution[0]))) {
 							collided = true;
-							global_solution = local_solution;
+							global_solution = s;
 							output = points.at(face.a)
 								+ global_solution[1] * u
 								+ global_solution[2] * v;
@@ -224,13 +211,40 @@ void Scene::_drawRaytraced(DrawingWindow& window) {
 			}
 
 			if (collided) {
+				ray = output - light;
+				auto ray_length{ glm::length(ray) };
 				output = this->_transformPoint(window, output, collided_scale);
 				for (auto mtl : materials) {
 					if (mtl.name.compare(collided_elem.mtl) != 0) continue;
-					window.setPixelColour(
-						static_cast<size_t>(output[0]),
-						static_cast<size_t>(output[1]),
-						Maths::pack(mtl.colour));
+					if (Render::in(window, glm::vec2{ output[0], output[1] })) {
+						bool shadowed{ false };
+						for (const std::pair<Object, float>& pair : objects) {
+							for (const Element& elem : pair.first.getElements()) {
+								const std::vector<glm::vec3>& points{ elem.points };
+								for (const Face& face : elem.faces) {
+									if (elem.name.compare(collided_elem.name) == 0) {
+										if (collided_face.a == face.a
+											&& collided_face.b == face.b
+											&& collided_face.c == face.c) continue;
+									}
+									glm::vec3 s;
+									if (this->_raytrace(light, ray,
+										points.at(face.a), points.at(face.b),
+										points.at(face.c), &s)) {
+										shadowed = s[0] < 1.0f;
+									}
+									if (shadowed) break;
+								}
+								if (shadowed) break;
+							}
+							if (shadowed) break;
+						}
+
+						window.setPixelColour(
+							static_cast<size_t>(output[0]),
+							static_cast<size_t>(output[1]),
+							Maths::pack(shadowed ? Colour{ 0, 0, 0 } : mtl.colour));
+					}
 				}
 			}
 		}
@@ -238,40 +252,25 @@ void Scene::_drawRaytraced(DrawingWindow& window) {
 }
 
 void Scene::translate(glm::vec3 v) {
-	camera_view = Maths::translate(v)
-		* camera_view;
-	print("translating");
+	camera_pos += v;
 }
 void Scene::rotateCamera(glm::vec3 r) {
-	camera_view = Maths::rotateZ(r[2])
+	extrinsic = Maths::rotateZ(r[2])
 		* Maths::rotateY(r[1])
 		* Maths::rotateX(r[0])
-		* camera_view;
-	print("rotating camera");
+		* extrinsic;
 }
 void Scene::rotateWorld(glm::vec3 r) {
-	auto c{ this->_getCameraPos() };
-	camera_view = Maths::translate(c)
-		* Maths::rotateZ(r[2])
+	camera_pos = Maths::rotateZ(r[2])
 		* Maths::rotateY(r[1])
 		* Maths::rotateX(r[0])
-		* Maths::translate(-1.0f * c)
-		* camera_view;
-	print("rotating world");
+		* camera_pos;
 }
-
-void Scene::print(std::string message) {
-#ifdef CG_DEBUG
-	std::cout << "---" << message << "---" << std::endl;
-	std::cout << "Camera: " << std::endl;
-	for (int i = 0; i < 4; i++) {
-		for (int j = 0; j < 4; j++) {
-			std::cout << camera_view[j][i] << " ";
-		}
-		std::cout << std::endl;
-	}
-	std::cout << "---" << "             " << "---" << std::endl << std::endl;
-#endif
+void Scene::lookAt(glm::vec3 l) {
+	glm::vec3 z{ glm::normalize(camera_pos - l) };
+	glm::vec3 x{ glm::normalize(glm::cross({ 0.0f, 1.0f, 0.0f }, z)) };
+	glm::vec3 y{ glm::normalize(glm::cross(x, z)) };
+	extrinsic = glm::inverse(glm::mat3{ x, y, z });
 }
 
 void Scene::setRenderMode(RenderMode mode) {
@@ -287,11 +286,6 @@ void Scene::loadObject(std::string name,
 		this->_loadMaterials(mtl_name);
 	}
 }
-
-glm::vec3 Scene::_getCameraPos() const {
-	return glm::vec3{ camera_view[3] } / camera_view[3][3];
-}
-
 void Scene::_loadMaterials(const std::string filename) {
 	std::ifstream stream(filename, std::ifstream::binary);
 	std::string line;

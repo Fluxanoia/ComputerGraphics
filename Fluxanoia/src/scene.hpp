@@ -24,29 +24,32 @@ private:
 		std::string texture{ };
 	};
 
-	glm::mat4 camera_view{ 
-		glm::vec4{ 1.0f, 0.0f, 0.0f, 0.0f },
-		glm::vec4{ 0.0f, -1.0f, 0.0f, 0.0f },
-		glm::vec4{ 0.0f, 0.0f, -1.0f, 0.0f },
-		glm::vec4{ 0.0f, 0.0f, 0.0f, 1.0f },
+	glm::vec3 light{ 0.0f, 0.8f, 0.0f };
+	glm::vec3 camera_pos{ 0.0f, 0.0f, 0.0f };
+	glm::mat3 calibration{ 
+		glm::vec3{ 1.0f, 0.0f, 0.0f },
+		glm::vec3{ 0.0f, 1.0f, 0.0f },
+		glm::vec3{ 0.0f, 0.0f, 1.0f },
 	};
-	glm::vec3 _getCameraPos() const;
-	float focal_length{ 1 };
+	glm::mat3 extrinsic{
+		glm::vec3{ 1.0f, 0.0f, 0.0f },
+		glm::vec3{ 0.0f, -1.0f, 0.0f },
+		glm::vec3{ 0.0f, 0.0f, 1.0f }
+	};
 	std::vector<float> depth{ };
 
 	std::vector<std::pair<std::string, TextureMap>> textures{ };
 	std::vector<std::pair<Object, float>> objects{ };
-	
-	glm::vec3 _relativePoint(glm::vec3 p);
+	std::vector<Material> materials{ };
+	void _loadMaterials(const std::string filename);
+
+	glm::mat4 _getExtrinsicMatrix() const;
 	glm::vec3 _transformPoint(DrawingWindow& w, 
 		glm::vec3 p, float scale);
 	void _transformPoints(DrawingWindow& w,
 		float scale,
 		std::vector<glm::vec3> p,
 		std::vector<glm::vec3>& out);
-
-	std::vector<Material> materials{ };
-	void _loadMaterials(const std::string filename);
 
 	void _facePoints(const Face& face,
 		const std::vector<glm::vec3> points,
@@ -60,7 +63,14 @@ private:
 		CanvasPoint& b,
 		CanvasPoint& c);
 
-	bool _verifyRaytrace(const glm::vec3& v) const;
+	bool _raytrace(const glm::vec3& from,
+		const glm::vec3& ray,
+		const glm::vec3& a,
+		const glm::vec3& b,
+		const glm::vec3& c,
+		glm::vec3* sr = nullptr,
+		glm::vec3* ur = nullptr,
+		glm::vec3* vr = nullptr) const;
 
 	void _drawWire(DrawingWindow& window,
 		const Element& elem,
@@ -70,8 +80,6 @@ private:
 		const std::vector<glm::vec3>& points, 
 		const Material& material);
 	void _drawRaytraced(DrawingWindow& window);
-
-	void print(std::string message);
 
 public:
 
@@ -83,6 +91,7 @@ public:
 	void translate(glm::vec3 v);
 	void rotateCamera(glm::vec3 r);
 	void rotateWorld(glm::vec3 r);
+	void lookAt(glm::vec3 l);
 
 	void setRenderMode(RenderMode mode);
 

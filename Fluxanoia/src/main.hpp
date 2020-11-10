@@ -14,7 +14,7 @@ class Main {
 private:
 
 	const float tra_fac{ 0.05f };
-	const float rot_fac{ static_cast<float>(PI) / 100.0f };
+	const float rot_fac{ static_cast<float>(PI) / 50.0f };
 
 	const int width;
 	const int height;

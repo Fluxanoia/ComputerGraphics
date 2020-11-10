@@ -24,6 +24,7 @@ void Main::run() {
 
 void Main::_draw() {
 	scene.draw(window);
+	// scene.rotateWorld({ 0, rot_fac / 2, 0 });
 }
 void Main::_update() { }
 void Main::_handleEvent(SDL_Event e) { 
@@ -57,19 +58,21 @@ void Main::_handleEvent(SDL_Event e) {
 		case SDLK_z: scene.setRenderMode(RenderMode::WIRE); break;
 		case SDLK_x: scene.setRenderMode(RenderMode::RASTER); break;
 		case SDLK_c: scene.setRenderMode(RenderMode::RAYTRACED); break;
+
+		case SDLK_r: scene.lookAt({ 0, 0, 0 });
 		}
 		if (glm::length(v) != 0) scene.translate(v);
 		if (glm::length(o) != 0) scene.rotateCamera(o);
 		if (glm::length(r) != 0) {
 			scene.rotateWorld(r);
-			// scene.rotateCamera(-1.0f * r);
+			scene.lookAt({ 0, 0, 0 });
 		}
 		break;
 	}
 }
 
 int main(int n, char *args[]) {
-	Main m{ 256, 256 };
+	Main m{ 512, 512 };
 	m.run();
 	return 0;
 }
