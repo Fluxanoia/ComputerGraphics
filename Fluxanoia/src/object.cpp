@@ -68,6 +68,14 @@ Object::Object(const std::string filename, const float scale) {
 		}
 	}
 	if (!element.name.empty()) elements.push_back(element);
+	for (Element& e : elements) {
+		for (Face& f : e.faces) {
+			f.normal = glm::normalize(glm::cross(
+				e.points.at(f.b) - e.points.at(f.a),
+				e.points.at(f.c) - e.points.at(f.a)
+			));
+		}
+	}
 	stream.close();
 }
 

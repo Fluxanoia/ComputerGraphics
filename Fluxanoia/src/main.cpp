@@ -5,6 +5,7 @@
 
 Main::Main(int width, int height) : width{ width }, height{ height } {
 	window = DrawingWindow{ width, height, false };
+	//scene.loadObject("sphere.obj", 0.4f, 100);
 	scene.loadObject("textured-cornell-box.obj", 0.4f, 100);
 }
 

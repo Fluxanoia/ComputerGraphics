@@ -24,7 +24,6 @@ private:
 		std::string texture{ };
 	};
 
-	glm::vec3 light{ 0.0f, 0.8f, 0.0f };
 	glm::vec3 camera_pos{ 0.0f, 0.0f, 0.0f };
 	glm::mat3 calibration{ 
 		glm::vec3{ 1.0f, 0.0f, 0.0f },
@@ -37,6 +36,25 @@ private:
 		glm::vec3{ 0.0f, 0.0f, 1.0f }
 	};
 	std::vector<float> depth{ };
+
+	float specular_power{ 16.0f };
+	float specular_cull{ 0.8f };
+	float light_strength{ 3.0f };
+	const float ambient_light{ 0.05f };
+	glm::vec3 light{ -0.2f, 0.8f, 0.5f };
+	//glm::vec3 light{ 0, 1.2f, 0 };
+	bool _occluded(const glm::vec3 v, 
+		const Element& celem, const Face& cface);
+	float _brightnessPhong(const glm::vec3 v,
+		const Element& celem, const Face& cface,
+		const glm::vec3 solution);
+	float _brightnessGouraud(const glm::vec3 v, 
+		const Element& celem, const Face& cface,
+		const glm::vec3 solution);
+	float _brightness(const glm::vec3 v,
+		const Element& celem, const Face& cface,
+		const glm::vec3 normal);
+	void _darken(Colour& c, float f);
 
 	std::vector<std::pair<std::string, TextureMap>> textures{ };
 	std::vector<std::pair<Object, float>> objects{ };

@@ -12,6 +12,7 @@
 struct Face {
 	size_t a{ 0 }, b{ 0 }, c{ 0 };
 	size_t ta{ 0 }, tb{ 0 }, tc{ 0 };
+	glm::vec3 normal;
 };
 struct Element {
 	std::string name{ };

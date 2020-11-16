@@ -212,43 +212,123 @@ void Scene::_drawRaytraced(DrawingWindow& window) {
 
 			if (collided) {
 				ray = output - light;
-				auto ray_length{ glm::length(ray) };
-				output = this->_transformPoint(window, output, collided_scale);
+				auto screen_coords{ this->_transformPoint(window, output, collided_scale) };
 				for (auto mtl : materials) {
 					if (mtl.name.compare(collided_elem.mtl) != 0) continue;
-					if (Render::in(window, glm::vec2{ output[0], output[1] })) {
-						bool shadowed{ false };
-						for (const std::pair<Object, float>& pair : objects) {
-							for (const Element& elem : pair.first.getElements()) {
-								const std::vector<glm::vec3>& points{ elem.points };
-								for (const Face& face : elem.faces) {
-									if (elem.name.compare(collided_elem.name) == 0) {
-										if (collided_face.a == face.a
-											&& collided_face.b == face.b
-											&& collided_face.c == face.c) continue;
-									}
-									glm::vec3 s;
-									if (this->_raytrace(light, ray,
-										points.at(face.a), points.at(face.b),
-										points.at(face.c), &s)) {
-										shadowed = s[0] < 1.0f;
-									}
-									if (shadowed) break;
-								}
-								if (shadowed) break;
-							}
-							if (shadowed) break;
-						}
-
+					if (Render::in(window, glm::vec2{ screen_coords[0], screen_coords[1] })) {
+						Colour colour{ mtl.colour };
+						this->_darken(colour, 
+							this->_brightnessPhong(output,
+								collided_elem, collided_face,
+								global_solution));
 						window.setPixelColour(
-							static_cast<size_t>(output[0]),
-							static_cast<size_t>(output[1]),
-							Maths::pack(shadowed ? Colour{ 0, 0, 0 } : mtl.colour));
+							static_cast<size_t>(screen_coords[0]),
+							static_cast<size_t>(screen_coords[1]),
+							Maths::pack(colour));
 					}
 				}
 			}
 		}
 	}
+}
+bool Scene::_occluded(const glm::vec3 v,
+	const Element& celem, const Face& cface) {
+	for (const std::pair<Object, float>& pair : objects) {
+		for (const Element& elem : pair.first.getElements()) {
+			const std::vector<glm::vec3>& points{ elem.points };
+			for (const Face& face : elem.faces) {
+				if (elem.name.compare(celem.name) == 0) {
+					if (cface.a == face.a
+						&& cface.b == face.b
+						&& cface.c == face.c) continue;
+				}
+				glm::vec3 s;
+				if (this->_raytrace(light, v - light,
+					points.at(face.a), points.at(face.b),
+					points.at(face.c), &s)) {
+					if (s[0] > 0.01f && s[0] < 1.0f) return true;
+				}
+			}
+		}
+	}
+	return false;
+}
+float Scene::_brightness(const glm::vec3 v,
+	const Element& celem, const Face& cface,
+	const glm::vec3 normal) {
+	auto ray{ v - light };
+	auto ray_length{ glm::length(ray) };
+
+	// Specular
+	float specular{ std::pow(glm::dot(glm::normalize(camera_pos - v),
+		glm::normalize(ray - 2.0f * normal * (glm::dot(ray, normal)))),
+		specular_power) };
+	if (specular < specular_cull) specular = specular_cull;
+
+	// Angle of Incidence
+	float incidence{ -glm::dot(glm::normalize(ray), normal) };
+	if (incidence <= 0) incidence = 0;
+
+	// Brightness
+	float brightness{ 1.0f };
+	if (this->_occluded(v, celem, cface)) {
+		brightness = ambient_light;
+	} else {
+		brightness *= specular;
+		brightness *= incidence;
+		brightness *= light_strength / (ray_length * ray_length);
+	}
+	if (brightness > 1.0f) brightness = 1.0f;
+	if (brightness < ambient_light) brightness = ambient_light;
+	return brightness;
+}
+float Scene::_brightnessPhong(const glm::vec3 v,
+	const Element& celem, const Face& cface,
+	const glm::vec3 solution) {
+	glm::vec3 na{ 0, 0, 0 };
+	glm::vec3 nb{ 0, 0, 0 };
+	glm::vec3 nc{ 0, 0, 0 };
+	for (const Face& f : celem.faces) {
+		for (auto p : { f.a, f.b, f.c }) {
+			if (p == cface.a) na += f.normal;
+			if (p == cface.b) nb += f.normal;
+			if (p == cface.c) nc += f.normal;
+		}
+	}
+	return this->_brightness(v,
+		celem, cface, glm::normalize(
+			(na * (1 - solution[1] - solution[2]))
+			+ (nb * solution[1])
+			+ (nc * solution[2])
+		));
+}
+float Scene::_brightnessGouraud(const glm::vec3 v,
+	const Element& celem, const Face& cface,
+	const glm::vec3 solution) {
+	glm::vec3 na{ 0, 0, 0 };
+	glm::vec3 nb{ 0, 0, 0 };
+	glm::vec3 nc{ 0, 0, 0 };
+	for (const Face& f : celem.faces) {
+		for (auto p : { f.a, f.b, f.c }) {
+			if (p == cface.a) na += f.normal;
+			if (p == cface.b) nb += f.normal;
+			if (p == cface.c) nc += f.normal;
+		}
+	}
+	float a{ this->_brightness(celem.points.at(cface.a), 
+		celem, cface, glm::normalize(na)) };
+	float b{ this->_brightness(celem.points.at(cface.b), 
+		celem, cface, glm::normalize(nb)) };
+	float c{ this->_brightness(celem.points.at(cface.c), 
+		celem, cface, glm::normalize(nc)) };
+	return (a * (1 - solution[1] - solution[2]))
+		+ (b * solution[1])
+		+ (c * solution[2]);
+}
+void Scene::_darken(Colour& c, float f) {
+	c.red = static_cast<int>(c.red * f);
+	c.green = static_cast<int>(c.green * f);
+	c.blue = static_cast<int>(c.blue * f);
 }
 
 void Scene::translate(glm::vec3 v) {
